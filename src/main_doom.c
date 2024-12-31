@@ -2,7 +2,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <ctype.h>
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
+#include <string.h>
 
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1); }
 
@@ -17,7 +19,6 @@ typedef int16_t  i16;
 typedef int32_t  i32;
 typedef int64_t  i64;
 typedef size_t   usize;
-typedef ssize_t  isize;
 
 #define PI 3.14159265359f
 #define TAU (2.0f * PI)
@@ -40,23 +41,47 @@ typedef ssize_t  isize;
 typedef struct v2_s { f32 x, y; } v2;
 typedef struct v2i_s { i32 x, y; } v2i;
 
-#define v2_to_v2i(_v) ({ __typeof__(_v) __v = (_v); (v2i) { __v.x, __v.y }; })
-#define v2i_to_v2(_v) ({ __typeof__(_v) __v = (_v); (v2) { __v.x, __v.y }; })
+static inline v2i v2_to_v2i(v2 _v) {
+    return (v2i) { (int)_v.x, (int)_v.y };
+}
 
-#define dot(_v0, _v1) ({ __typeof__(_v0) __v0 = (_v0), __v1 = (_v1); (__v0.x * __v1.x) + (__v0.y * __v1.y); })
-#define length(_vl) ({ __typeof__(_vl) __vl = (_vl); sqrtf(dot(__vl, __vl)); })
-#define normalize(_vn) ({ __typeof__(_vn) __vn = (_vn); const f32 l = length(__vn); (__typeof__(_vn)) { __vn.x / l, __vn.y / l }; })
-#define min(_a, _b) ({ __typeof__(_a) __a = (_a), __b = (_b); __a < __b ? __a : __b; })
-#define max(_a, _b) ({ __typeof__(_a) __a = (_a), __b = (_b); __a > __b ? __a : __b; })
-#define clamp(_x, _mi, _ma) (min(max(_x, _mi), _ma))
-#define ifnan(_x, _alt) ({ __typeof__(_x) __x = (_x); isnan(__x) ? (_alt) : __x; })
+static inline v2 v2i_to_v2(v2i _v) {
+    return (v2) { (float)_v.x, (float)_v.y };
+}
+
+static inline float dot(v2 _v0, v2 _v1) {
+    return (_v0.x * _v1.x) + (_v0.y * _v1.y);
+}
+
+static inline float length(v2 _vl) {
+    return sqrtf(dot(_vl, _vl));
+}
+
+static inline v2 normalize(v2 _vn) {
+    float l = length(_vn);
+    return (v2) { _vn.x / l, _vn.y / l };
+}
+
+static inline float min(float _a, float _b) {
+    return (_a < _b) ? _a : _b;
+}
+
+static inline float max(float _a, float _b) {
+    return (_a > _b) ? _a : _b;
+}
+
+static inline float clamp(float _x, float _mi, float _ma) {
+    return min(max(_x, _mi), _ma);
+}
+
+static inline float ifnan(float _x, float _alt) {
+    return isnan(_x) ? _alt : _x;
+}
 
 // -1 right, 0 on, 1 left
-#define point_side(_p, _a, _b) ({                                              \
-        __typeof__(_p) __p = (_p), __a = (_a), __b = (_b);                         \
-        -(((__p.x - __a.x) * (__b.y - __a.y))                                  \
-            - ((__p.y - __a.y) * (__b.x - __a.x)));                            \
-    })
+static inline float point_side(v2 _p, v2 _a, v2 _b) {
+    return -(((_p.x - _a.x) * (_b.y - _a.y)) - ((_p.y - _a.y) * (_b.x - _a.x)));
+}
 
 // rotate vector v by angle a
 static inline v2 rotate(v2 v, f32 a) {

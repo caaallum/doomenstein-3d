@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1); }
@@ -16,7 +17,6 @@ typedef int16_t  i16;
 typedef int32_t  i32;
 typedef int64_t  i64;
 typedef size_t   usize;
-typedef ssize_t  isize;
 
 #define SCREEN_WIDTH 384
 #define SCREEN_HEIGHT 216
@@ -24,20 +24,30 @@ typedef ssize_t  isize;
 typedef struct v2_s { f32 x, y; } v2;
 typedef struct v2i_s { i32 x, y; } v2i;
 
-#define dot(v0, v1)                  \
-    ({ const v2 _v0 = (v0), _v1 = (v1); (_v0.x * _v1.x) + (_v0.y * _v1.y); })
-#define length(v) ({ const v2 _v = (v); sqrtf(dot(_v, _v)); })
-#define normalize(u) ({              \
-        const v2 _u = (u);           \
-        const f32 l = length(_u);    \
-        (v2) { _u.x / l, _u.y / l }; \
-    })
-#define min(a, b) ({ __typeof__(a) _a = (a), _b = (b); _a < _b ? _a : _b; })
-#define max(a, b) ({ __typeof__(a) _a = (a), _b = (b); _a > _b ? _a : _b; })
-#define sign(a) ({                                       \
-        __typeof__(a) _a = (a);                          \
-        (__typeof__(a))(_a < 0 ? -1 : (_a > 0 ? 1 : 0)); \
-    })
+static inline float dot(v2 v0, v2 v1) {
+    return (v0.x * v1.x) + (v0.y * v1.y);
+}
+
+static inline float length(v2 v) {
+    return sqrtf(dot(v, v));
+}
+
+static inline v2 normalize(v2 u) {
+    float l = length(u);
+    return (v2) { u.x / l, u.y / l };
+}
+
+static inline float min(float a, float b) {
+    return a < b ? a : b;
+}
+
+static inline float max(float a, float b) {
+    return a > b ? a : b;
+}
+
+static inline float sign(float a) {
+    return (a < 0) ? -1 : (a > 0 ? 1 : 0);
+}
 
 #define MAP_SIZE 8
 static u8 MAPDATA[MAP_SIZE * MAP_SIZE] = {
